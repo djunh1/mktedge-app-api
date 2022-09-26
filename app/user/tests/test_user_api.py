@@ -1,3 +1,4 @@
+from venv import create
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -8,6 +9,7 @@ from rest_framework import status
 
 
 CREATE_USER_URL = reverse('user:create')
+TOKEN_URL = reverse('user:token')
 
 def create_user(**params):
     return get_user_model().objects.create_user(**params)
@@ -56,6 +58,66 @@ class PublicUserApiTests(TestCase):
             email=payload['email']
         ).exists()
         self.assertFalse(user_exists)
+
+    def test_create_user_token(self):
+        user_details = {
+            'name': 'Tressor',
+            'email': 'Tressor@example.com',
+            'password': 'testPassword123'
+        }
+
+        create_user(**user_details)
+
+        payload = {
+            'email': user_details['email'],
+            'password' : user_details['password'],
+            'name' : user_details['name']
+        }
+
+        res = self.client.post(TOKEN_URL, payload)
+
+        self.assertIn('token', res.data)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_create_bad_user_token(self):
+        user_details = {
+            'name': 'Tressor',
+            'email': 'Tressor@example.com',
+            'password': 'testPassword123'
+        }
+
+        create_user(**user_details)
+
+        payload = {
+            'email': user_details['email'],
+            'password' : 'badPassword',
+            'name' : user_details['name']
+        }
+
+        res = self.client.post(TOKEN_URL, payload)
+
+        self.assertNotIn('token', res.data)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_user_token_blank_password(self):
+        user_details = {
+            'name': 'Tressor',
+            'email': 'Tressor@example.com',
+            'password': ''
+        }
+
+        payload = {
+            'email': user_details['email'],
+            'password' : '',
+            'name' : user_details['name']
+        }
+
+        res = self.client.post(TOKEN_URL, payload)
+
+        self.assertNotIn('token', res.data)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+
 
 
 
