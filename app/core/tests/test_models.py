@@ -4,8 +4,15 @@ Tests for models.
 
 DJacobson 8/27/2022
 """
+import pytz
+
+from decimal import Decimal
+import datetime
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+
+from core import models
 
 class ModelTests(TestCase):
 
@@ -45,3 +52,24 @@ class ModelTests(TestCase):
 
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
+
+    def test_create_stock(self):
+        """Will not use, but create a stock object in DB
+        """
+        user = get_user_model().objects.create_user(
+            'test@example.com',
+            'testpassword123',
+        )
+
+        stock = models.Stock.objects.create(
+            user=user,
+            ticker='APG-1',
+            start_date=datetime.datetime(2020, 4, 27, 0, 0, 0, 0, pytz.UTC),
+            end_date=datetime.datetime(2022, 1, 18, 0, 0, 0, 0, pytz.UTC),
+            num_bases=5,
+            sector='Electronic Technology',
+            length_run=90,
+            pct_gain=Decimal('205.3'),
+        )
+
+        self.assertEqual(str(stock), stock.ticker)

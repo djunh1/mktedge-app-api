@@ -1,6 +1,7 @@
 '''
 DB Models
 '''
+from django.conf import settings
 
 from django.db import models
 from django.contrib.auth.models import (
@@ -41,3 +42,26 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+
+
+class Stock(models.Model):
+    """Stock Ticker object.  Each ticker is an individual stock run
+    """
+
+    #TODO: Add TextChoices for each sector
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    ) # maybe consider removing the cascaded delete, we want to keep stocks even if user is deleted
+
+    ticker=models.CharField(max_length=10)
+    start_date=models.DateTimeField()
+    end_date= models.DateTimeField()
+    num_bases=models.IntegerField()
+    sector=models.TextField()  #TODO: add choice field?
+    length_run=models.IntegerField()
+    pct_gain=models.DecimalField(max_digits=7, decimal_places=1)
+
+    def __str__(self):
+        return self.ticker
