@@ -8,17 +8,21 @@ services:
         - DEV=true
     ports:
       - "8000:8000"
+      - "3000:3000" # debugging service (ptvsd)
     volumes:
       - ./app:/app
     command: >
       sh -c "python manage.py wait_for_db &&
              python manage.py migrate &&
+             python manage.py populate_db &&
              python manage.py runserver 0.0.0.0:8000"
     environment:
       - DB_HOST=db
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changePwDev
+      - USER_EMAIL=test@example.com
+      - USER_PASS=N0tAr3alPassw0rdAndWillBeChang37
     depends_on:
       - db
 
@@ -26,10 +30,14 @@ services:
     image: postgres:13.1-alpine
     volumes:
       - dev-db-data:/var/lib/postgresql/data
+      # - ./data:/data
+      # - ./data:/var/lib/postgresql/data/pgdata
     environment:
       - POSTGRES_DB=devdb
       - POSTGRES_USER=devuser
       - POSTGRES_PASSWORD=changePwDev
+    ports:
+      - "5433:5432"
 
 
 volumes:
