@@ -56,12 +56,13 @@ class Stock(models.Model):
     ) # maybe consider removing the cascaded delete, we want to keep stocks even if user is deleted
 
     ticker=models.CharField(max_length=10)
-    start_date=models.DateTimeField()
-    end_date= models.DateTimeField()
+    start_date=models.DateField()
+    end_date= models.DateField()
     num_bases=models.IntegerField()
     sector=models.TextField()  #TODO: add choice field?
     length_run=models.IntegerField()
     pct_gain=models.DecimalField(max_digits=7, decimal_places=1)
+    stock_run_notes = models.TextField(blank=True)
 
     def __str__(self):
         return self.ticker
