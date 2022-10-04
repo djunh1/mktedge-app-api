@@ -44,6 +44,9 @@ def create_stock(user, **params):
     stock = Stock.objects.create(user=user, **defaults)
     return stock
 
+def create_user(**params):
+    return get_user_model().objects.create_user(**params)
+
 class PublicStockAPITests(TestCase):
     """unauthenticated API requests
 
@@ -66,10 +69,7 @@ class PrivateStockAPITests(TestCase):
     """
     def setUp(self):
         self.client = APIClient()
-        self.user = get_user_model().objects.create_user(
-            'user@example.com',
-            'testP@ssw0rd24601',
-        )
+        self.user  = create_user(email='test@example.com', password='testP@ssw0rd24601')
         self.client.force_authenticate(self.user)
 
     def test_fetch_stocks(self):
@@ -87,10 +87,7 @@ class PrivateStockAPITests(TestCase):
         self.assertEqual(res.data, serializer.data)
 
     def test_stock_list_only_for_user(self):
-        someone_else = get_user_model().objects.create_user(
-            'other@example.com',
-            'password123',
-        )
+        someone_else = create_user(email='otherUser@example.com', password='testP@ssw0rd24601')
 
         create_stock(user=someone_else)
         create_stock(user=self.user)
@@ -113,6 +110,8 @@ class PrivateStockAPITests(TestCase):
     def test_create_stock_run(self):
         """Creating stock run object
         """
+
+        # TODO: do I need an ID to create these?
         payload = {
             "id": 1,
             "ticker": "amd-1",
@@ -131,8 +130,6 @@ class PrivateStockAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         stock = Stock.objects.get(id=res.data['id'])
 
-        # for k, v in payload.items():
-        #     self.assertEqual(getattr(stock, k), v)
         self.assertEqual(stock.ticker, "amd-1")
         self.assertEqual(stock.start_date, datetime.date(2015, 10, 20))
         self.assertEqual(stock.end_date, datetime.date(2018, 9, 20))
@@ -142,6 +139,91 @@ class PrivateStockAPITests(TestCase):
         self.assertEqual(stock.pct_gain, round(Decimal(123.4),2))
         self.assertEqual(stock.stock_run_notes, "a note")
         self.assertEqual(stock.user, self.user)
+
+    def test_partial_update(self):
+        """Update part of stock run object
+        """
+        original_length_run = 25
+        stock = create_stock(ticker='UCO-1', start_date=datetime.date(2015, 7, 20),  end_date=datetime.date(2017, 2, 20),
+                             sector='Energy Minerals', num_bases=3, length_run=original_length_run, pct_gain=Decimal(54.7),  user=self.user,
+                             stock_run_notes='Partial update test.')
+
+        payload = {'ticker': 'UCO-2'}
+        url = detail_url(stock.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        stock.refresh_from_db()
+        self.assertEqual(stock.ticker, payload['ticker'])
+        self.assertEqual(stock.length_run, original_length_run)
+        self.assertEqual(stock.user, self.user)
+
+    def test_full_update(self):
+        """Test full update of stock run."""
+        stock = create_stock(ticker='TSLA-1', start_date=datetime.date(2016, 7, 20),  end_date=datetime.date(2017, 2, 20),
+                             sector='Energy Minerals', num_bases=3, length_run=56, pct_gain=Decimal(300.7),  user=self.user,
+                             stock_run_notes='Tesla run #1')
+
+        payload = {
+            "ticker": "tsla-3",
+            "start_date": "2015-7-20",
+            "end_date": "2020-09-20",
+            "sector": "Electronic Technology",
+            "num_bases": 5,
+            "length_run": 65,
+            "pct_gain": "350.7",
+            "stock_run_notes": "Tesla run number #3 corrected"
+        }
+        url = detail_url(stock.id)
+        res = self.client.put(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        stock.refresh_from_db()
+
+        self.assertEqual(stock.ticker, "tsla-3")
+        self.assertEqual(stock.start_date, datetime.date(2015, 7, 20))
+        self.assertEqual(stock.end_date, datetime.date(2020, 9, 20))
+        self.assertEqual(stock.sector, "Electronic Technology")
+        self.assertEqual(stock.num_bases, 5)
+        self.assertEqual(stock.length_run, 65)
+        self.assertEqual(stock.pct_gain, round(Decimal(350.7),2))
+        self.assertEqual(stock.stock_run_notes, "Tesla run number #3 corrected")
+        self.assertEqual(stock.user, self.user)
+
+    def test_update_user_returns_error(self):
+        """Test changing the stock run user results in an error."""
+        new_user = create_user(email='user2@example.com', password='test123')
+        stock = create_stock(user=self.user)
+
+        payload = {'user': new_user.id}
+        url = detail_url(stock.id)
+        self.client.patch(url, payload)
+
+        stock.refresh_from_db()
+        self.assertEqual(stock.user, self.user)
+
+    def test_delete_stock(self):
+        """Test deleting a stock successful."""
+        stock = create_stock(user=self.user)
+
+        url = detail_url(stock.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Stock.objects.filter(id=stock.id).exists())
+
+    def test_other_users_stock_error(self):
+        """Test trying to delete another users stock gives error."""
+        new_user = create_user(email='user2@example.com', password='test1234')
+        stock = create_stock(user=new_user)
+
+        url = detail_url(stock.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(Stock.objects.filter(id=stock.id).exists())
+
+
 
 
 
