@@ -14,6 +14,11 @@ from django.contrib.auth import get_user_model
 
 from core import models
 
+
+def create_user(email='user@example.com', password='testpass123'):
+    """Create a return a new user."""
+    return get_user_model().objects.create_user(email, password)
+
 class ModelTests(TestCase):
 
     def test_create_user_with_email_success(self):
@@ -73,3 +78,32 @@ class ModelTests(TestCase):
         )
 
         self.assertEqual(str(stock), stock.ticker)
+
+    def test_create_stock_base(self):
+        """Test stock base object creation is successful."""
+        user = create_user()
+        stock = models.Stock.objects.create(
+            user=user,
+            ticker='NVDA-1',
+            start_date=datetime.datetime(2015, 9, 28, 0, 0, 0, 0, pytz.UTC),
+            end_date=datetime.datetime(2018, 10, 8, 0, 0, 0, 0, pytz.UTC),
+            num_bases=9,
+            sector='Electronic Technology',
+            length_run=157,
+            pct_gain=Decimal('1109.0'),
+        )
+        base = models.StockBase.objects.create(
+            user=user,
+            ticker=stock,
+            base_count=5,
+            base_failure='n',
+            bo_date=datetime.datetime(2019, 5, 9, 0, 0, 0, 0, pytz.UTC),
+            vol_bo=371198872,
+            vol_20=175539248,
+            bo_vol_ratio=Decimal('2.11'),
+            price_percent_range=Decimal('11.3'),
+            base_length=6,
+            sales_0qtr = Decimal('1428.0'),
+        )
+
+        self.assertEqual(stock, base.ticker)

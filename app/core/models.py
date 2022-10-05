@@ -64,5 +64,97 @@ class Stock(models.Model):
     pct_gain=models.DecimalField(max_digits=7, decimal_places=1)
     stock_run_notes = models.TextField(blank=True)
 
+    bases = models.ManyToManyField('StockBase')
+
     def __str__(self):
         return self.ticker
+
+class StockBase(models.Model):
+    """Stock base object.
+
+    price_percent_run - temporarily the movement from bottom of base (first connecting two points),
+    to the top (first connecting two points).
+
+    Args:
+        models (_type_): _description_
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT
+    )
+
+    ticker = models.ForeignKey(
+        Stock,
+        on_delete=models.PROTECT
+    )
+
+    base_count=models.IntegerField()
+    base_failure=models.CharField(max_length=1)
+    bo_date=models.DateField()
+    vol_bo=models.IntegerField(blank=True)
+    vol_20=models.IntegerField(blank=True)
+    bo_vol_ratio=models.DecimalField(max_digits=4, decimal_places=2, blank=True)
+    price_percent_range=models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
+    base_length=models.IntegerField(blank=True)
+
+    #fundies
+    sales_0qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # sales_1qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # sales_2qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # sales_3qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # sales_4qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # sales_5qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # sales_6qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # sales_7qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    # gm_0qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # gm_1qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # gm_2qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # gm_3qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # gm_4qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # gm_5qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # gm_6qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # gm_7qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    # eps_0qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # eps_1qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # eps_2qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # eps_3qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # eps_4qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # eps_5qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # eps_6qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # eps_7qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    # net_margin_0qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # net_margin_1qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # net_margin_2qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # net_margin_3qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # net_margin_4qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # net_margin_5qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # net_margin_6qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # net_margin_7qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    # eps_0qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # eps_1qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # eps_2qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # eps_3qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    # gm_0qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # gm_1qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # gm_2qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # gm_3qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    # net_margin_0qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # net_margin_1qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # net_margin_2qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # net_margin_3qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    # sales_0qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # sales_1qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # sales_2qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    # sales_3qtr_yoy = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    def __str__(self):
+        return self.ticker
+
