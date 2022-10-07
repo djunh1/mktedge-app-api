@@ -84,22 +84,24 @@ class StockBase(models.Model):
         on_delete=models.PROTECT
     )
 
-    ticker = models.ForeignKey(
+    stock_reference = models.ForeignKey(
         Stock,
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT, null=True
     )
 
+    ticker=models.CharField(max_length=10)
+
     base_count=models.IntegerField()
-    base_failure=models.CharField(max_length=1)
+    base_failure=models.CharField(max_length=1, null=True)
     bo_date=models.DateField()
-    vol_bo=models.IntegerField(blank=True)
-    vol_20=models.IntegerField(blank=True)
-    bo_vol_ratio=models.DecimalField(max_digits=4, decimal_places=2, blank=True)
+    vol_bo=models.IntegerField(blank=True, null=True)
+    vol_20=models.IntegerField(blank=True, null=True)
+    bo_vol_ratio=models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
     price_percent_range=models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
-    base_length=models.IntegerField(blank=True)
+    base_length=models.IntegerField(blank=True, null=True)
 
     #fundies
-    sales_0qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    sales_0qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     # sales_1qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
     # sales_2qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
     # sales_3qtr = models.DecimalField(max_digits=10, decimal_places=2, blank=True)

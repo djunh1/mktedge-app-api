@@ -19,7 +19,8 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from core.models import (
-    Stock
+    Stock,
+    StockBase
 )
 from stock import serializers
 
@@ -68,4 +69,19 @@ class StockViewSet(viewsets.ModelViewSet):
         """
         serializer.save(user=self.request.user)
 
+class StockBaseViewSet(mixins.UpdateModelMixin, mixins.ListModelMixin,
+                        viewsets.GenericViewSet):
+    """Manage stock bases
+
+    Args:
+        mixins (_type_): _description_
+        viewsets (_type_): _description_
+    """
+    serializer_class = serializers.StockBaseSerializer
+    queryset = StockBase.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user).order_by('ticker') #might break since this is a fk
 

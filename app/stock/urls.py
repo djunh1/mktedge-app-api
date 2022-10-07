@@ -10,6 +10,7 @@ from stock import views
 
 router = DefaultRouter()
 router.register('stocks', views.StockViewSet)
+router.register('stockbases', views.StockBaseViewSet)
 
 app_name = 'stock'
 

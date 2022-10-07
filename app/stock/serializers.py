@@ -1,7 +1,23 @@
 from rest_framework import serializers, fields
 
-from core.models import Stock
+from core.models import(Stock, StockBase)
 
+class StockBaseSerializer(serializers.ModelSerializer):
+    """Serializer for a stock base object.
+
+    Args:
+        serializers (_type_): _description_
+    """
+
+    class Meta:
+        model = StockBase
+        fields = [
+            'id', 'ticker', 'base_count', 'base_failure', 'bo_date',
+            'vol_bo', 'vol_20', 'bo_vol_ratio', 'price_percent_range',
+            'base_length',
+            'sales_0qtr'
+        ]
+        read_only_fields = ['id']
 
 class StockSerializer(serializers.ModelSerializer):
     """Serializer for a stock
