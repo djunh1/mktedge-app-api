@@ -94,10 +94,10 @@ class StockBase(models.Model):
     base_count=models.IntegerField()
     base_failure=models.CharField(max_length=1, null=True)
     bo_date=models.DateField()
-    vol_bo=models.IntegerField(blank=True, null=True)
-    vol_20=models.IntegerField(blank=True, null=True)
+    vol_bo=models.BigIntegerField(blank=True, null=True)
+    vol_20=models.BigIntegerField(blank=True, null=True)
     bo_vol_ratio=models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
-    price_percent_range=models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
+    price_percent_range=models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
     base_length=models.IntegerField(blank=True, null=True)
 
     #fundies
