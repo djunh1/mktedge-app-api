@@ -17,6 +17,8 @@ from stock.serializers import StockBaseSerializer
 
 STOCK_BASE_URL = reverse('stock:stockbase-list')
 
+def detail_url(stock_base_id):
+    return reverse('stock:stockbase-detail', args=[stock_base_id])
 
 def create_user(email='gengis_car@example.com', password='testp@ssw0rds'):
     """Create and return user."""
@@ -120,6 +122,43 @@ class PrivateStockBaseApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
-        print(res.data[0])
         self.assertEqual(res.data[0]['ticker'], stock_base.ticker)
         self.assertEqual(res.data[0]['id'], stock_base.id)
+
+    def test_update_stock_base(self):
+        stock = create_stock()
+        stock_base = StockBase.objects.create(user=self.user,
+                                 stock_reference=stock,
+                                 ticker="FSLR-2",
+                                 base_count=5,
+                                 base_failure='y',
+                                 base_length=4,
+                                 price_percent_range=Decimal('24.3'),
+                                 bo_date=datetime.datetime(2015, 9, 28, 0, 0, 0, 0, pytz.UTC))
+
+        payload = {'ticker': 'FSLR-1'}
+        url = detail_url(stock_base.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        stock_base.refresh_from_db()
+        self.assertEqual(stock_base.ticker, payload['ticker'])
+
+    def test_delete_stock_base(self):
+        stock = create_stock()
+        stock_base = StockBase.objects.create(user=self.user,
+                                 stock_reference=stock,
+                                 ticker="TSLA-1",
+                                 base_count=3,
+                                 base_failure='n',
+                                 base_length=15,
+                                 price_percent_range=Decimal('43.3'),
+                                 bo_date=datetime.datetime(2020, 7, 28, 0, 0, 0, 0, pytz.UTC))
+
+        url = detail_url(stock_base.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        stock_bases = StockBase.objects.filter(user=self.user)
+        self.assertFalse(stock_bases.exists())
+

@@ -69,8 +69,8 @@ class StockViewSet(viewsets.ModelViewSet):
         """
         serializer.save(user=self.request.user)
 
-class StockBaseViewSet(mixins.UpdateModelMixin, mixins.ListModelMixin,
-                        viewsets.GenericViewSet):
+class StockBaseViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, mixins.ListModelMixin,
+                      viewsets.GenericViewSet):
     """Manage stock bases
 
     Args:

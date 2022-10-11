@@ -67,7 +67,7 @@ class PopulateDbOnStartupTests(TestCase):
     def call_command(self, *args, **options):
         out = StringIO()
         call_command(
-            'populate_db'
+            'populate_stock_run_data_in_db'
         )
         return out.getvalue()
 
