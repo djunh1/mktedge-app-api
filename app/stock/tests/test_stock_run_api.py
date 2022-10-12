@@ -9,7 +9,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Stock
+from core.models import (Stock, StockBase)
 
 
 from stock.serializers import (
@@ -222,6 +222,95 @@ class PrivateStockAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Stock.objects.filter(id=stock.id).exists())
+
+    def test_create_stock_with_new_stock_bases(self):
+        """Test creating a stock with multiple new stock bases."""
+        payload = {
+            "ticker": "SQ-1",
+            "start_date": "2016-10-31",
+            "end_date": "2018-10-8",
+            "sector": "Technology Services",
+            "num_bases": 6,
+            "length_run": 101,
+            "pct_gain": Decimal("738.5"),
+            "stock_run_notes": "SQ stock run",
+            "bases": [ {
+                'ticker': 'SQ-1',
+                'base_count': 0,
+                'bo_date': '2016-10-31'
+            },
+            {
+                'ticker': 'SQ-1',
+                'base_count': 0,
+                'bo_date': '2017-2-21',
+                'base_failure': 'n',
+                'vol_bo':78210911,
+                'vol_20':24972449,
+                'bo_vol_ratio': Decimal('3.13'),
+                'price_percent_range': Decimal('10.3'),
+                'base_length': Decimal('10')
+            },
+            ]
+        }
+        res = self.client.post(STOCKS_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        stocks = Stock.objects.filter(user=self.user)
+        self.assertEqual(stocks.count(), 1)
+        stock = stocks[0]
+        self.assertEqual(stock.bases.count(), 2)
+        for stockbase in payload['bases']:
+            exists = stock.bases.filter(
+                ticker=stockbase['ticker'],
+                user=self.user,
+            ).exists()
+            self.assertTrue(exists)
+
+    def test_create_recipe_with_existing_ingredient(self):
+        """Test creating a new recipe with existing stock base."""
+        stock_base = StockBase.objects.create(user=self.user, ticker='SQ-1', base_count=0,
+                    bo_date=datetime.date(2016, 10, 31))
+        payload = {
+            "ticker": "SQ-1",
+            "start_date": "2016-10-31",
+            "end_date": "2018-10-8",
+            "sector": "Technology Services",
+            "num_bases": 6,
+            "length_run": 101,
+            "pct_gain": Decimal("738.5"),
+            "stock_run_notes": "SQ stock run",
+            "bases": [ {
+                'ticker': 'SQ-1',
+                'base_count': 0,
+                'bo_date': '2016-10-31'
+            },
+            {
+                'ticker': 'SQ-1',
+                'base_count': 0,
+                'bo_date': '2017-2-21',
+                'base_failure': 'n',
+                'vol_bo':78210911,
+                'vol_20':24972449,
+                'bo_vol_ratio': Decimal('3.13'),
+                'price_percent_range': Decimal('10.3'),
+                'base_length': Decimal('10')
+            },
+            ]
+        }
+        res = self.client.post(STOCKS_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        stocks = Stock.objects.filter(user=self.user)
+        self.assertEqual(stocks.count(), 1)
+        stock = stocks[0]
+        self.assertEqual(stock.bases.count(), 2) #only two stock bases since we need 1 associated with a stock run only
+        self.assertIn(stock_base, stock.bases.all())
+        for stockbase in payload['bases']:
+            exists = stock.bases.filter(
+                ticker=stockbase['ticker'],
+                user=self.user,
+            ).exists()
+            self.assertTrue(exists)
 
 
 

@@ -1,3 +1,4 @@
+from importlib.metadata import requires
 from rest_framework import serializers, fields
 
 from core.models import(Stock, StockBase)
@@ -28,10 +29,13 @@ class StockSerializer(serializers.ModelSerializer):
     start_date = fields.DateField(input_formats=['%Y-%m-%d'])
     end_date = fields.DateField(input_formats=['%Y-%m-%d'])
 
+    bases = StockBaseSerializer(many=True, required=False)
+
     class Meta:
         model = Stock
         fields = [
-            'id', 'ticker', 'start_date', 'end_date', 'sector', 'num_bases', 'length_run', 'pct_gain'
+            'id', 'ticker', 'start_date', 'end_date', 'sector',
+            'num_bases', 'length_run', 'pct_gain', 'bases'
         ]
         read_only_fields = ['id']
 
@@ -44,9 +48,26 @@ class StockDetailSerializer(StockSerializer):
     class Meta(StockSerializer.Meta):
         fields = StockSerializer.Meta.fields + ['stock_run_notes']
 
+    def _get_or_create_stock_bases(self, bases, stock):
+        """Fetch or create stock bases
+
+        Args:
+            bases (_type_): _description_
+            stock (_type_): _description_
+        """
+        auth_user = self.context['request'].user
+        for base in bases:
+            base_obj, created = StockBase.objects.get_or_create(
+                user=auth_user,
+                **base,
+            )
+            stock.bases.add(base_obj)
+
     def create(self, validated_data):
         """Create a stock."""
+        bases = validated_data.pop('bases', [])
         stock = Stock.objects.create(**validated_data)
+        self._get_or_create_stock_bases(bases, stock)
         return stock
 
     def update(self, instance, validated_data):

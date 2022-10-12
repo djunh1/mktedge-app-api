@@ -90,10 +90,10 @@ class StockBase(models.Model):
     )
 
     ticker=models.CharField(max_length=10)
-
     base_count=models.IntegerField()
-    base_failure=models.CharField(max_length=1, null=True)
     bo_date=models.DateField()
+
+    base_failure=models.CharField(max_length=1, null=True)
     vol_bo=models.BigIntegerField(blank=True, null=True)
     vol_20=models.BigIntegerField(blank=True, null=True)
     bo_vol_ratio=models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
