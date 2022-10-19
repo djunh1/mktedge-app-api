@@ -367,9 +367,6 @@ class PrivateStockAPITests(TestCase):
         url = detail_url(stock.id)
 
         res = self.client.patch(url, payload, format='json')
-
-        for e in stock.bases.all():
-            print(e.bo_date)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn(SQ_BASE_2, stock.bases.all())
         self.assertNotIn(SQ_BASE_1, stock.bases.all())
@@ -394,6 +391,45 @@ class PrivateStockAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(stock.bases.count(), 0)
 
+    def test_filter_by_stock_base(self):
+        """Filtering by a stock base?
+        """
+        NVDA_STOCK = create_stock(user=self.user, ticker='NVDA-1')
+        AMD_STOCK = create_stock(user=self.user, ticker='AMD-1')
+
+        nvda_base = StockBase.objects.create(user=self.user,
+                                 stock_reference=NVDA_STOCK,
+                                 ticker="NVDA-1",
+                                 base_count=2,
+                                 base_failure='n',
+                                 base_length=15,
+                                 price_percent_range=Decimal('43.3'),
+                                 bo_date=datetime.datetime(2020, 7, 28, 0, 0, 0, 0, pytz.UTC))
+
+        amd_base = StockBase.objects.create(user=self.user,
+                                 stock_reference=AMD_STOCK,
+                                 ticker="AMD-1",
+                                 base_count=4,
+                                 base_failure='y',
+                                 base_length=17,
+                                 price_percent_range=Decimal('43.3'),
+                                 bo_date=datetime.datetime(2022, 7, 28, 0, 0, 0, 0, pytz.UTC))
+
+        NVDA_STOCK.bases.add(nvda_base)
+        AMD_STOCK.bases.add(amd_base)
+
+        TSLA_STOCK = create_stock(user=self.user, ticker='TSLA-1')
+
+        params = {'bases': f'{nvda_base.id},{amd_base.id}'}
+        res = self.client.get(STOCKS_URL, params)
+
+
+        s1 = StockSerializer(NVDA_STOCK)
+        s2 = StockSerializer(NVDA_STOCK)
+        s3 = StockSerializer(TSLA_STOCK)
+        self.assertIn(s1.data, res.data)
+        self.assertIn(s2.data, res.data)
+        self.assertNotIn(s3.data, res.data)
 
 
 

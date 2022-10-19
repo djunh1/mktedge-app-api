@@ -24,6 +24,18 @@ from core.models import (
 )
 from stock import serializers
 
+
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                'bases',
+                OpenApiTypes.STR,
+                description='Comma separated list of stock base IDs to filter',
+            ),
+        ]
+    )
+)
 class StockViewSet(viewsets.ModelViewSet):
     """Manage the stock (runs) API
 
@@ -38,13 +50,21 @@ class StockViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def _params_to_int(self, qs):
+        return [int(str_id) for str_id in qs.split(',')]
+
     def get_queryset(self):
         """Stocks for authenticated user
 
         Returns:
             _type_: _description_
         """
+        stock_bases = self.request.query_params.get('bases')
         queryset = self.queryset
+        if stock_bases:
+            base_ids = self._params_to_int(stock_bases)
+            queryset = queryset.filter(bases__id__in=base_ids)
+
         return queryset.filter(
             user=self.request.user
         ).order_by('-id').distinct()
