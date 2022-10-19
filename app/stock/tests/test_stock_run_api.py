@@ -29,7 +29,7 @@ def detail_url(stock_id):
 
 def create_stock(user, **params):
     defaults = {
-        'ticker':'amd-1',
+        'ticker':'AMD-1',
         'start_date' : datetime.date(2015, 10, 20),
         'end_date' : datetime.date(2017, 10, 20) ,
         'num_bases' : 4,
@@ -266,7 +266,7 @@ class PrivateStockAPITests(TestCase):
             ).exists()
             self.assertTrue(exists)
 
-    def test_create_recipe_with_existing_ingredient(self):
+    def test_create_stock_with_existing_base(self):
         """Test creating a new recipe with existing stock base."""
         stock_base = StockBase.objects.create(user=self.user, ticker='SQ-1', base_count=0,
                     bo_date=datetime.date(2016, 10, 31))
@@ -311,6 +311,88 @@ class PrivateStockAPITests(TestCase):
                 user=self.user,
             ).exists()
             self.assertTrue(exists)
+
+
+    def test_create_base_on_stock_run_update(self):
+        """Tests creating a stock base when updating a stock run
+        """
+        stock = create_stock(self.user)
+
+        payload = {'bases': [{
+                    'ticker': 'AMD-1',
+                    'base_count': 0,
+                    'bo_date': '2017-2-21',
+                    'base_failure': 'y',
+                    'vol_bo':78210911,
+                    'vol_20':24972449,
+                    'bo_vol_ratio': Decimal('3.13'),
+                    'price_percent_range': Decimal('10.3'),
+                    'base_length': Decimal('10')
+        }]}
+
+        url = detail_url(stock.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        new_stock_base = StockBase.objects.get(user=self.user, ticker='AMD-1')
+        self.assertIn(new_stock_base, stock.bases.all())
+
+    def test_update_stock_run_assign_stock_base(self):
+        """Tests assigning an existing stock base when updating a stock run upject
+
+        To Do - I don't want to nessesarily replace an existing base when updating.  But update feature
+        isn't going to be utilized in the final product anyway..
+        """
+        SQ_BASE_1 = StockBase.objects.create(user=self.user,
+                                             ticker='SQ-1',
+                                             base_count=0,
+                                             bo_date=datetime.date(2016, 10, 31))
+
+        stock = create_stock(self.user)
+        stock.bases.add(SQ_BASE_1)
+
+        SQ_BASE_2 = StockBase.objects.create(user=self.user,
+                                            ticker='SQ-1',
+                                            base_count=2,
+                                            bo_vol_ratio=Decimal('4.2'),
+                                            bo_date=datetime.date(2020, 3, 16))
+
+        payload = {'bases': [{
+                    'ticker': 'SQ-1',
+                    'base_count': 2,
+                    'bo_date': '2020-3-16',
+                    'bo_vol_ratio': Decimal('4.2')
+        }]}
+
+        url = detail_url(stock.id)
+
+        res = self.client.patch(url, payload, format='json')
+
+        for e in stock.bases.all():
+            print(e.bo_date)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(SQ_BASE_2, stock.bases.all())
+        self.assertNotIn(SQ_BASE_1, stock.bases.all())
+
+    def test_clear_stock_bases(self):
+        stock = create_stock(self.user)
+        stock_base = StockBase.objects.create(user=self.user,
+                                 stock_reference=stock,
+                                 ticker="NVDA-1",
+                                 base_count=2,
+                                 base_failure='n',
+                                 base_length=15,
+                                 price_percent_range=Decimal('43.3'),
+                                 bo_date=datetime.datetime(2020, 7, 28, 0, 0, 0, 0, pytz.UTC))
+        stock.bases.add(stock_base)
+
+
+        payload = {'bases': []}
+        url = detail_url(stock.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(stock.bases.count(), 0)
 
 
 

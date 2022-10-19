@@ -24,10 +24,10 @@ def create_user(email='gengis_car@example.com', password='testp@ssw0rds'):
     """Create and return user."""
     return get_user_model().objects.create_user(email=email, password=password)
 
-def create_stock():
+def create_stock(user):
     # TODO: convert this from datetime to date.  DB only takes a date anyway but this works for now
     stock = models.Stock.objects.create(
-            user=create_user(),
+            user=user,
             ticker='NVDA-1',
             start_date=datetime.datetime(2015, 9, 28, 0, 0, 0, 0, pytz.UTC),
             end_date=datetime.datetime(2018, 10, 8, 0, 0, 0, 0, pytz.UTC),
@@ -56,7 +56,7 @@ class PrivateStockBaseApiTests(TestCase):
         self.client.force_authenticate(self.user)
 
     def test_fetch_stock_bases(self):
-        stock = create_stock()
+        stock = create_stock(self.user)
         StockBase.objects.create(user=self.user,
                                  stock_reference=stock,
                                  ticker='AMD-1',
@@ -87,7 +87,7 @@ class PrivateStockBaseApiTests(TestCase):
            Eventually will not be the case
         """
         user2 = create_user(email='toyboata@example.com')
-        stock = create_stock()
+        stock = create_stock(self.user)
         other_stock = models.Stock.objects.create(
                                 user=user2,
                                 ticker='NVDA-1',
@@ -126,7 +126,7 @@ class PrivateStockBaseApiTests(TestCase):
         self.assertEqual(res.data[0]['id'], stock_base.id)
 
     def test_update_stock_base(self):
-        stock = create_stock()
+        stock = create_stock(self.user)
         stock_base = StockBase.objects.create(user=self.user,
                                  stock_reference=stock,
                                  ticker="FSLR-2",
@@ -145,7 +145,7 @@ class PrivateStockBaseApiTests(TestCase):
         self.assertEqual(stock_base.ticker, payload['ticker'])
 
     def test_delete_stock_base(self):
-        stock = create_stock()
+        stock = create_stock(self.user)
         stock_base = StockBase.objects.create(user=self.user,
                                  stock_reference=stock,
                                  ticker="TSLA-1",
@@ -161,4 +161,33 @@ class PrivateStockBaseApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         stock_bases = StockBase.objects.filter(user=self.user)
         self.assertFalse(stock_bases.exists())
+
+    def test_update_stock_base(self):
+        stock = create_stock(self.user)
+        stock_base = StockBase.objects.create(user=self.user,
+                                 stock_reference=stock,
+                                 ticker="NVDA-1",
+                                 base_count=5,
+                                 base_failure='y',
+                                 base_length=4,
+                                 price_percent_range=Decimal('24.3'),
+                                 bo_date=datetime.datetime(2015, 9, 28, 0, 0, 0, 0, pytz.UTC))
+        payload = {
+                    'ticker': 'NVDA-1',
+                    'base_count': 0,
+                    'bo_date': '2017-2-21',
+                    'base_failure': 'n',
+                    'vol_bo':78210911,
+                    'vol_20':24972449,
+                    'bo_vol_ratio': Decimal('3.13'),
+                    'price_percent_range': Decimal('10.3'),
+                    'base_length': Decimal('10')
+                  }
+
+        url = detail_url(stock_base.id)
+        res = self.client.patch(url, payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        stock_base.refresh_from_db()
+        self.assertEqual(stock_base.ticker, payload['ticker'])
+
 

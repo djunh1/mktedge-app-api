@@ -72,6 +72,11 @@ class StockDetailSerializer(StockSerializer):
 
     def update(self, instance, validated_data):
         """Update stock."""
+        bases = validated_data.pop('bases', None)
+        if bases is not None:
+            instance.bases.clear()
+            self._get_or_create_stock_bases(bases, instance)
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
